@@ -1,13 +1,15 @@
 package proxy
 
 import (
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"ollama-registry-pull-through-cache/internal/worker/cache_worker"
 	"os"
 	"path"
+	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 func Handler(p *httputil.ReverseProxy, cacheDir string, upstream url.URL) func(http.ResponseWriter, *http.Request) {
@@ -28,6 +30,11 @@ func Handler(p *httputil.ReverseProxy, cacheDir string, upstream url.URL) func(h
 		if _, err := os.Stat(cachePath); err == nil {
 			// File does exist. Serve from cache
 			log.Info().Str("component", "handler").Str("source", "CACHE").Msgf("%s %s", r.Method, r.URL.Path)
+
+			if strings.Contains(r.URL.Path, "/blobs/") {
+				log.Info().Str("component", "handler").Msgf("Adding location HTTP header")
+				w.Header().Set("location", r.URL.Path)
+			}
 
 			http.ServeFile(w, r, cachePath)
 			return
