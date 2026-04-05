@@ -64,6 +64,7 @@ func main() {
 	}
 
 	singleHostReverseProxy := httputil.NewSingleHostReverseProxy(upstream)
+	proxy.ConfigureWWWAuthenticateRewrite(singleHostReverseProxy)
 	if cli.DumpUpstreamRequests {
 		singleHostReverseProxy.Transport = &dumptransport.Transport{}
 	}
